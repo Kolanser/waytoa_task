@@ -25,7 +25,8 @@ def create_tables(host, user, password, db_name):
                     url_task varchar(512) NOT NULL,
                     name_task varchar(64) NOT NULL,
                     complexity integer,
-                    resolved integer
+                    resolved integer,
+                    kontest integer DEFAULT 0
                 );
                 """
             )
@@ -115,7 +116,7 @@ def insert_data(host, user, password, db_name, one_scrap):
 
 def select_tasks(host, user, password, db_name, tag, complexity):
     try:
-        select = ['Задач нет']
+        select = (('Задач нет',),)
         connection = psycopg2.connect(
                 host=host,
                 user=user,
@@ -133,6 +134,8 @@ def select_tasks(host, user, password, db_name, tag, complexity):
                 )
             )
             select = cursor.fetchall()
+            if not select:
+                select = (('Задач нет',),)
     except Exception as _ex:
         print("[ERROR] Error while working with PostgreSQL", _ex)
     finally:
@@ -141,6 +144,45 @@ def select_tasks(host, user, password, db_name, tag, complexity):
             print("[INFO] PostgreSQL connection closed")
         return select
 
+
+def create_kontest(host, user, password, db_name):
+    try:
+        connection = psycopg2.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=db_name
+            )
+        connection.autocommit = True
+
+        complexities = []
+        with connection.cursor() as cursor:
+            cursor.execute(
+                (
+                    'SELECT DISTINCT complexity FROM tasks'
+                    ' WHERE complexity > 0'
+                    ' AND kontest_2 = 0'
+                )
+            )
+            complexities = cursor.fetchall()
+        tags = []
+        with connection.cursor() as cursor:
+            cursor.execute(
+                (
+                    'SELECT DISTINCT tag FROM tags'
+                )
+            )
+            tags = cursor.fetchall()
+        count_task = 10
+        for complexity in complexities:
+            for tag in tags:
+                pass
+    except Exception as _ex:
+        print("[ERROR] Error while working with PostgreSQL", _ex)
+    finally:
+        if connection:
+            connection.close()
+            print("[INFO] PostgreSQL connection closed")
 def main():
     host = getenv('HOST')
     user = getenv('USER')
