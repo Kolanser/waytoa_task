@@ -70,7 +70,7 @@ def scrap(url, headers):
 
 
 def main():
-    url = 'https://codeforces.com/problemset/page/70?order=BY_SOLVED_DESC'
+    url = 'https://codeforces.com/problemset/page/1?order=BY_SOLVED_DESC'
     headers = {
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
     }
