@@ -1,4 +1,9 @@
 import psycopg2
+from os import getenv
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 def create_tables(host, user, password, db_name):
@@ -53,44 +58,55 @@ def create_tables(host, user, password, db_name):
 def insert_data(host, user, password, db_name, one_scrap):
     try:
         connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
-        )
+                host=host,
+                user=user,
+                password=password,
+                database=db_name
+            )
         connection.autocommit = True
-
         for values in one_scrap:
+            task_id = None
             with connection.cursor() as cursor:
                 cursor.execute(
-                    """INSERT INTO tasks (
-                        number_task,
-                        url_task,
-                        name_task,
-                        complexity,
-                        resolved) VALUES
-                    (%s, %s, %s, %s, %s)""",
-                    values[:5]
+                    (
+                        "SELECT id FROM tasks"
+                        f" WHERE number_task = '{values[0]}'"
+                    )
                 )
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f"SELECT id FROM tasks WHERE number_task = '{values[0]}';"
-                )
-                
-                task_id = cursor.fetchone()[0]
-
-            for elem in values[5]:
+                task_id = cursor.fetchone()
+            if not task_id:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        """INSERT INTO tags (
-                            task_id,
-                            tag) VALUES
-                        (%s, %s)""",
-                        (task_id, elem)
-                    )    
-                print("[INFO] Data was succefully inserted") 
+                        """INSERT INTO tasks (
+                            number_task,
+                            url_task,
+                            name_task,
+                            complexity,
+                            resolved) VALUES
+                        (%s, %s, %s, %s, %s)""",
+                        values[:5]
+                    )
+                print("[INFO] Data was succefully inserted in tasks")
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        (
+                            "SELECT id FROM tasks"
+                            f" WHERE number_task = '{values[0]}'"
+                        )
+                    )
+                    task_id = cursor.fetchone()[0]
+                for elem in values[5]:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            """INSERT INTO tags (
+                                task_id,
+                                tag) VALUES
+                            (%s, %s)""",
+                            (task_id, elem)
+                        )
+                print("[INFO] Data was succefully inserted in tags")
     except Exception as _ex:
-        print("[INFO] Error while working with PostgreSQL", _ex)
+        print("[ERROR] Error while working with PostgreSQL", _ex)
     finally:
         if connection:
             connection.close()
@@ -98,10 +114,10 @@ def insert_data(host, user, password, db_name, one_scrap):
 
 
 def main():
-    host = '127.0.0.1'
-    user = 'postgres'
-    password = 'postgres'
-    db_name = 'scrap'
+    host = getenv('HOST')
+    user = getenv('USER')
+    password = getenv('PASSWORD')
+    db_name = getenv('DB_NAME')
     create_tables(host, user, password, db_name)
 
 
