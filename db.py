@@ -236,6 +236,34 @@ def create_kontest(host, user, password, db_name):
             print("[INFO] PostgreSQL connection closed")
 
 
+def select_tags_uniq(host, user, password, db_name):
+    """получение уникальных тем."""
+    uniq_tags = (('Тем нет',),)
+    try:
+        connection = psycopg2.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=db_name
+            )
+        connection.autocommit = True
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                (
+                    'SELECT DISTINCT tag FROM tags'
+                    ' ORDER BY tag'
+                )
+            )
+            uniq_tags = cursor.fetchall()
+    except Exception as _ex:
+        print("[ERROR] Error while working with PostgreSQL", _ex)
+    finally:
+        if connection:
+            connection.close()
+            print("[INFO] PostgreSQL connection closed")
+        return uniq_tags
+
 def main():
     host = getenv('HOST')
     user = getenv('USER')
