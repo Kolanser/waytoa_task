@@ -31,7 +31,8 @@ def start(update, context):
 
 
 def get_tasks(update, context):
-    tag = update.message.text.split('-')[0]
+    tag = update.message.text.split('-')[0].lower()
+    print(tag)
     complexity = update.message.text.split('-')[1]
     select = select_tasks(HOST, USER, PASSWORD, DB_NAME, tag, complexity)
     chat = update.effective_chat
@@ -54,7 +55,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(
         MessageHandler(
-            Filters.regex(r'^[а-я]+-[\d]+'),
+            Filters.regex(r'^[А-Яа-я]+-[\d]+'),
             get_tasks
         )
     )
