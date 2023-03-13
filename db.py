@@ -7,6 +7,7 @@ load_dotenv()
 
 
 def create_tables(host, user, password, db_name):
+    """Создание таблиц."""
     try:
         connection = psycopg2.connect(
             host=host,
@@ -57,6 +58,7 @@ def create_tables(host, user, password, db_name):
 
 
 def insert_data(host, user, password, db_name, one_scrap):
+    """Добавление данных в таблицы БД."""
     try:
         connection = psycopg2.connect(
                 host=host,
@@ -115,6 +117,7 @@ def insert_data(host, user, password, db_name, one_scrap):
 
 
 def select_tasks(host, user, password, db_name, tag, complexity):
+    """Выборка задач по сложности и теме."""
     try:
         select = (('Задач нет',),)
         connection = psycopg2.connect(
@@ -129,7 +132,7 @@ def select_tasks(host, user, password, db_name, tag, complexity):
                 (
                     'SELECT url_task FROM tasks'
                     ' WHERE id IN'
-		            f' (SELECT task_id FROM tags WHERE tag = \'{tag}\')'
+                    f' (SELECT task_id FROM tags WHERE tag = \'{tag}\')'
                     f' AND complexity = {complexity}'
                 )
             )
@@ -146,6 +149,7 @@ def select_tasks(host, user, password, db_name, tag, complexity):
 
 
 def create_kontest(host, user, password, db_name):
+    """Формирование подборок задач."""
     try:
         connection = psycopg2.connect(
                 host=host,
@@ -161,7 +165,7 @@ def create_kontest(host, user, password, db_name):
                 (
                     'SELECT DISTINCT complexity FROM tasks'
                     ' WHERE complexity > 0'
-                    ' AND kontest_2 = 0'
+                    ' AND kontest = 0'
                 )
             )
             complexities = cursor.fetchall()
@@ -173,16 +177,48 @@ def create_kontest(host, user, password, db_name):
                 )
             )
             tags = cursor.fetchall()
-        count_task = 10
+        count_task_contest = 10
+        max_kontest = 0
+        select_max_kontest = 'SELECT MAX(kontest) FROM tasks'
+        with connection.cursor() as cursor:
+            cursor.execute(select_max_kontest)
+            max_kontest = cursor.fetchone()[0]
         for complexity in complexities:
             for tag in tags:
-                pass
+                while True:
+                    select_task_count = (
+                        'SELECT id FROM tasks '
+                        f'WHERE complexity = {complexity[0]}'
+                        ' AND kontest = 0'
+                        ' AND id IN '
+                        f'(SELECT task_id FROM tags'
+                        f' WHERE tag = \'{tag[0]}\')'
+                        f' LIMIT {count_task_contest}'
+                    )
+                    id_tasks = []
+                    with connection.cursor() as cursor:
+                        cursor.execute(select_task_count)
+                        id_tasks = cursor.fetchall()
+                    if len(id_tasks) != count_task_contest:
+                        break
+                    max_kontest += 1
+                    id_tasks = list(map(lambda elem: str(elem[0]), id_tasks))
+                    update = (
+                        f'UPDATE tasks SET kontest = {max_kontest}'
+                        ' WHERE id IN'
+                        f' ({",".join(id_tasks)})'
+                    )
+                    with connection.cursor() as cursor:
+                        cursor.execute(update)
+                        print('max_kontest=', max_kontest)     
     except Exception as _ex:
         print("[ERROR] Error while working with PostgreSQL", _ex)
     finally:
         if connection:
             connection.close()
             print("[INFO] PostgreSQL connection closed")
+
+
 def main():
     host = getenv('HOST')
     user = getenv('USER')

@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from time import sleep
-from db import insert_data
+from db import insert_data, create_kontest
 from os import getenv
 from dotenv import load_dotenv
 
@@ -54,7 +54,7 @@ def get_one_scrap(url, headers):
 
 
 def scrap(url, headers):
-    """Парсинг всех страниц."""
+    """Парсинг всех страниц, занесение в БД, формирование задач."""
     host = getenv('HOST')
     user = getenv('USER')
     password = getenv('PASSWORD')
@@ -67,6 +67,7 @@ def scrap(url, headers):
             headers
         )
         insert_data(host, user, password, db_name, one_scrap)
+        create_kontest(host, user, password, db_name)
 
 
 def main():
@@ -74,6 +75,7 @@ def main():
     headers = {
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7'
     }
+
     while True:
         scrap(url, headers)
         sleep(RETRY_TIME)
