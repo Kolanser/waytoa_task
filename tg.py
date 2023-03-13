@@ -32,7 +32,6 @@ def start(update, context):
 
 def get_tasks(update, context):
     tag = update.message.text.split('-')[0].lower()
-    print(tag)
     complexity = update.message.text.split('-')[1]
     select = select_tasks(HOST, USER, PASSWORD, DB_NAME, tag, complexity)
     chat = update.effective_chat
