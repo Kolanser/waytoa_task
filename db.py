@@ -155,7 +155,7 @@ def select_tasks(host, user, password, db_name, tag, complexity):
                         f' WHERE kontest = {id_kontest}'
                     )
                 )
-                tasks_kontest = cursor.fetchall()     
+                tasks_kontest = cursor.fetchall()
     except Exception as _ex:
         print("[ERROR] Error while working with PostgreSQL", _ex)
     finally:
@@ -227,7 +227,7 @@ def create_kontest(host, user, password, db_name):
                     )
                     with connection.cursor() as cursor:
                         cursor.execute(update)
-                        print('max_kontest=', max_kontest)     
+                        print('max_kontest=', max_kontest)
     except Exception as _ex:
         print("[ERROR] Error while working with PostgreSQL", _ex)
     finally:
@@ -263,6 +263,7 @@ def select_tags_uniq(host, user, password, db_name):
             connection.close()
             print("[INFO] PostgreSQL connection closed")
         return uniq_tags
+
 
 def main():
     host = getenv('HOST')
