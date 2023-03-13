@@ -1,6 +1,7 @@
 import psycopg2
 from os import getenv
 from dotenv import load_dotenv
+from random import choice
 
 
 load_dotenv()
@@ -119,7 +120,7 @@ def insert_data(host, user, password, db_name, one_scrap):
 def select_tasks(host, user, password, db_name, tag, complexity):
     """Выборка задач по сложности и теме."""
     try:
-        select = (('Задач нет',),)
+        tasks_kontest = (('Задач нет',),)
         connection = psycopg2.connect(
                 host=host,
                 user=user,
@@ -127,25 +128,41 @@ def select_tasks(host, user, password, db_name, tag, complexity):
                 database=db_name
             )
         connection.autocommit = True
+        ids_tasks_kontest_all = []
         with connection.cursor() as cursor:
             cursor.execute(
                 (
-                    'SELECT url_task FROM tasks'
+                    'SELECT DISTINCT kontest FROM tasks'
                     ' WHERE id IN'
                     f' (SELECT task_id FROM tags WHERE tag = \'{tag}\')'
                     f' AND complexity = {complexity}'
+                    f' AND kontest > 0'
                 )
             )
-            select = cursor.fetchall()
-            if not select:
-                select = (('Задач нет',),)
+            ids_tasks_kontest_all = cursor.fetchall()
+        if ids_tasks_kontest_all:
+            ids_tasks_kontest_all = list(
+                map(
+                    lambda elem: elem[0],
+                    ids_tasks_kontest_all
+                )
+            )
+            id_kontest = str(choice(ids_tasks_kontest_all))
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    (
+                        'SELECT url_task FROM tasks'
+                        f' WHERE kontest = {id_kontest}'
+                    )
+                )
+                tasks_kontest = cursor.fetchall()     
     except Exception as _ex:
         print("[ERROR] Error while working with PostgreSQL", _ex)
     finally:
         if connection:
             connection.close()
             print("[INFO] PostgreSQL connection closed")
-        return select
+        return tasks_kontest
 
 
 def create_kontest(host, user, password, db_name):
