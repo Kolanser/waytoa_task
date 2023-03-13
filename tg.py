@@ -41,6 +41,14 @@ def get_tasks(update, context):
     )
 
 
+def get_error(update, context):
+    chat = update.effective_chat
+    context.bot.send_message(
+        chat_id=chat.id,
+        text='Пожалуйста, проверьте правильность указания темы и сложности'
+    )
+
+
 def main():
     updater = Updater(token=TELEGRAM_TOKEN)
     updater.dispatcher.add_handler(CommandHandler('start', start))
@@ -50,6 +58,7 @@ def main():
             get_tasks
         )
     )
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, get_error))
     updater.start_polling()
     updater.idle()
 
